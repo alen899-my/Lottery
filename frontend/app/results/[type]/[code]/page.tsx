@@ -70,18 +70,22 @@ export default async function DetailResultPage({ params }: { params: Promise<{ t
 
       <div className="container mx-auto px-4 mt-12">
         {/* --- 1ST PRIZE CARD --- */}
-        {firstPrize && (
-          <div className="mb-12 relative bg-gradient-to-br from-primary/20 to-transparent border border-primary/40 p-8 md:p-12 rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(200,160,50,0.1)] before:content-[''] before:absolute before:left-[-12px] before:top-1/2 before:-translate-y-1/2 before:w-[24px] before:h-[24px] before:bg-[#0a0a0a] before:rounded-full before:border before:border-primary/40 after:content-[''] after:absolute after:right-[-12px] after:top-1/2 after:-translate-y-1/2 after:w-[24px] after:h-[24px] after:bg-[#0a0a0a] after:rounded-full after:border after:border-primary/40">
-            <div className="flex items-center gap-2 mb-4">
-                <Trophy className="text-primary w-6 h-6" />
-                <p className="text-[12px] font-black uppercase tracking-[0.3em] text-primary">1ST PRIZE WINNER</p>
-            </div>
-            <div className="text-6xl md:text-9xl font-mono font-black tracking-tighter text-white truncate">
-                {firstPrize[1][0]}
-            </div>
-          </div>
-        )}
+       {firstPrize && (
+  <div className="mb-8 md:mb-12 relative bg-gradient-to-br from-primary/20 to-transparent border border-primary/40 p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(200,160,50,0.1)] 
+    before:content-[''] before:absolute before:left-[-12px] before:top-1/2 before:-translate-y-1/2 before:w-[24px] before:h-[24px] before:bg-[#0a0a0a] before:rounded-full before:border before:border-primary/40 
+    after:content-[''] after:absolute after:right-[-12px] after:top-1/2 after:-translate-y-1/2 after:w-[24px] after:h-[24px] after:bg-[#0a0a0a] after:rounded-full after:border after:border-primary/40">
+    
+    <div className="flex items-center gap-2 mb-3 md:mb-4">
+        <Trophy className="text-primary w-5 h-5 md:w-6 md:h-6" />
+        <p className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-primary">1ST PRIZE WINNER</p>
+    </div>
 
+    {/* CHANGED: Adjusted text size for mobile (text-4xl) and removed truncate */}
+    <div className="text-4xl sm:text-5xl md:text-9xl font-mono font-black tracking-tighter text-white leading-none">
+        {firstPrize[1][0]}
+    </div>
+  </div>
+)}
         {/* --- REMAINING RANKS --- */}
         <div className="space-y-8">
           {remainingPrizes.map(([label, nums]) => (
