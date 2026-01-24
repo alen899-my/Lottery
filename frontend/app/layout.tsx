@@ -5,10 +5,12 @@ export const metadata: Metadata = {
   title: "Kerala Win | Official Live Kerala Lottery Results",
   description: "Check the latest Kerala state lottery results live. Fast, accurate, and gold-standard updates for all daily draws including Win-Win, Akshaya, and more.",
   keywords: ["kerala lottery results", "live lottery result kerala", "kerala win", "lottery result today"],
-  // 1. ADDED: Google Search Console Verification
+  
+  // 1. UPDATED: New Google Search Console Verification Code
   verification: {
-    google: "tQeLOhC13aXvBpetI1aHv6xPFF2cVHhVTpMgfy5jf2M",
+    google: "p1V4dZZtxMUqIYDIxFs2v3ig_OlOGMEfHt60Bgnzjmg",
   },
+
   openGraph: {
     title: "Kerala Win - Fast & Accurate Lottery Results",
     description: "Your trusted source for Kerala State Lottery updates.",
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
     siteName: "Kerala Win",
     images: [
       {
-        url: "/og-image.png", // Ensure this image exists in your public folder
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "Kerala Win Lottery Results",
@@ -34,7 +36,6 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // 2. UPDATED: JSON-LD Schema with your actual Vercel URL
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -49,10 +50,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className="dark">
-      <head>
-        {/* The metadata export above handles the meta tags, 
-            but you can add manual tags here if needed */}
-      </head>
       <body className="antialiased bg-[#0a0a0a]">
         <script
           type="application/ld+json"
