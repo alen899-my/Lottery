@@ -12,6 +12,7 @@ from app.scrapper import fetch_latest_results
 from app.database import collection
 
 load_dotenv()
+
 # --- SCHEDULER LOGIC ---
 async def daily_scrape_job():
     """
@@ -50,14 +51,13 @@ async def lifespan(app: FastAPI):
     # Initialize Scheduler with IST timezone
     scheduler = AsyncIOScheduler(timezone="Asia/Kolkata")
     
-    # CRON TRIGGER: Run every 5 minutes (0, 5, 10... 55) during the 15th hour (3 PM)
-    # This automatically stops at 4:00 PM.
-    trigger = CronTrigger(hour="15", minute="0-59/5", timezone="Asia/Kolkata")
+    # CRON TRIGGER: Run every 5 minutes during hours 15, 16, 17, and 18 (3 PM to 6:59 PM IST)
+    trigger = CronTrigger(hour="15-18", minute="0-59/5", timezone="Asia/Kolkata")
     
     scheduler.add_job(daily_scrape_job, trigger)
     scheduler.start()
     
-    print("📅 Scheduler Active: Monitoring Kerala Lottery (3:00 PM - 4:00 PM IST)")
+    print("📅 Scheduler Active: Monitoring Kerala Lottery (3:00 PM - 7:00 PM IST)")
     yield
     scheduler.shutdown()
 
@@ -65,7 +65,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Kerala Lottery API", lifespan=lifespan)
 
 # 2. DYNAMIC CORS CONFIGURATION
-# This pulls the URL from your .env file or defaults to localhost
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 app.add_middleware(
@@ -80,6 +79,5 @@ app.include_router(router, prefix="/api")
 if __name__ == "__main__":
     import uvicorn
     # 3. DYNAMIC PORT SELECTION
-    # Most deployment platforms (like Render/Railway) assign a port via environment variable
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
