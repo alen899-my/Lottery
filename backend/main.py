@@ -65,11 +65,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Kerala Lottery API", lifespan=lifespan)
 
 # 2. DYNAMIC CORS CONFIGURATION
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+origins = [
+    "http://localhost:3000",
+    "https://kerala-win.vercel.app",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url], 
+    allow_origins=origins, # Use the list instead of a single string
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
