@@ -66,18 +66,21 @@ app = FastAPI(title="Kerala Lottery API", lifespan=lifespan)
 
 # 2. DYNAMIC CORS CONFIGURATION
 origins = [
-    "http://localhost:3000",
-    "https://kerala-win.vercel.app",
+    "http://localhost:3000",           # Local Web
+    "http://localhost:8081",           # Local Mobile (Metro)
+    "https://kerala-win.vercel.app",    # Production Web
+    "http://10.177.249.145:8081",      # Hotspot Mobile
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Use the list instead of a single string
+    # If testing APK and getting "Network Error", change this to ["*"] 
+    # but set allow_credentials=False
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.include_router(router, prefix="/api")
 
 if __name__ == "__main__":
