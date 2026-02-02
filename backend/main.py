@@ -67,7 +67,7 @@ app = FastAPI(title="Kerala Lottery API", lifespan=lifespan)
 # 2. DYNAMIC CORS CONFIGURATION
 origins = [
     "http://localhost:3000",           # Local Web
-    "http://localhost:8081",           # Local Mobile (Metro)
+    "http://localhost:8083",           # Local Mobile (Metro)
     "https://kerala-win.vercel.app",    # Production Web
     "http://10.177.249.145:8081",      # Hotspot Mobile
 ]
