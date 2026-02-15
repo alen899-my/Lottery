@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query
 from app.scrapper import fetch_latest_results
+from app.live_scrapper import fetch_live_results
 from app.database import collection
 from app.models import LotteryResult
 from datetime import datetime
@@ -21,6 +22,20 @@ async def trigger_scrape():
         )
         return {"message": "Success", "data": data}
     return {"message": "Failed to fetch"}
+
+@router.get("/scrape-live")
+async def trigger_live_scrape():
+    """Fetches live results from GoodReturns.in"""
+    data = await fetch_live_results()
+    if data:
+        # Save to MongoDB
+        await collection.update_one(
+            {"code": data["code"]}, 
+            {"$set": data}, 
+            upsert=True
+        )
+        return {"message": "Live Success", "data": data}
+    return {"message": "Failed to fetch live data"}
 @router.get("/results")
 async def get_all_results(name: str = Query(None)):
     query = {}

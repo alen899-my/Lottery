@@ -9,6 +9,7 @@ import pytz
 import os
 from app.routes import router
 from app.scrapper import fetch_latest_results
+from app.live_scrapper import fetch_live_results
 from app.database import collection
 
 load_dotenv()
@@ -31,7 +32,7 @@ async def daily_scrape_job():
         print(f"✅ SUCCESS: Results for {today_str} already exist in DB. Skipping task.")
         return
 
-    # 2. ATTEMPT SCRAPE: If results not found in DB
+    # 2. ATTEMPT OFFICIAL PDF SCRAPE
     data = await fetch_latest_results()
     
     # 3. DATE VERIFICATION: Only save if the scraped PDF date matches today
@@ -41,9 +42,23 @@ async def daily_scrape_job():
             {"$set": data}, 
             upsert=True
         )
-        print(f"🚀 MISSION COMPLETE: Fetched and saved results for {today_str}.")
+        print(f"🚀 OFFICIAL PDF: Fetched and saved results for {today_str}.")
+        return
+
+    # --- LIVE DATA FALLBACK (If Official PDF not ready) ---
+    print(f"⚠️ Official PDF not ready for {today_str}. Trying Live Source...")
+    live_data = await fetch_live_results()
+    
+    if live_data and live_data.get("draw_date") == today_str:
+        # Check if we already have partial live data, update it
+        await collection.update_one(
+            {"code": live_data["code"]}, 
+            {"$set": live_data}, 
+            upsert=True
+        )
+        print(f"⚡ LIVE UPDATE: Saved provisional results for {today_str}.")
     else:
-        print(f"⏳ NOT READY: Results for {today_str} not available on site yet. Retrying in 5 mins.")
+        print(f"⏳ NOT READY: Neither Official nor Live results available for {today_str}. Retrying in 5 mins.")
 
 # --- APP LIFESPAN (Starts with FastAPI) ---
 @asynccontextmanager
