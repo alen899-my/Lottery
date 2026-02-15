@@ -9,15 +9,9 @@ router = APIRouter()
 async def trigger_scrape():
     data = await fetch_latest_results()
     if data:
-        # --- FIX: Create a sortable date field ---
-        try:
-            # Converts "02-02-2026" string to a Python Date object
-            # If your date separator is different (e.g. /), change the '-' below
-            data["iso_date"] = datetime.strptime(data["draw_date"], "%d/%m/%Y")
-        except Exception as e:
-            print(f"Date parse error: {e}")
-            data["iso_date"] = datetime.now() # Fallback
-        # ----------------------------------------
+        # Ensure iso_date is present
+        if "iso_date" not in data:
+            data["iso_date"] = datetime.now()
 
         # Save to MongoDB
         await collection.update_one(

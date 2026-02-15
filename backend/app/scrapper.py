@@ -4,6 +4,7 @@ from pypdf import PdfReader
 import io
 import re
 import asyncio
+from datetime import datetime
 
 BASE_URL = "https://statelottery.kerala.gov.in/English/index.php/lottery-result-view"
 
@@ -78,6 +79,17 @@ def parse_lottery_text(text):
             "draw_date": date_match.group(1).strip() if date_match else "Unknown",
             "prizes": {}
         }
+
+        # --- FIX: Add sortable date directly in scraper ---
+        try:
+            if data["draw_date"] != "Unknown":
+                data["iso_date"] = datetime.strptime(data["draw_date"], "%d/%m/%Y")
+            else:
+                data["iso_date"] = datetime.now()
+        except Exception as e:
+            print(f"⚠️ Date parsing failed in scraper: {e}")
+            data["iso_date"] = datetime.now()
+        # --------------------------------------------------
 
         # 2. DYNAMIC PRIZE PARSING
         prize_blocks = re.findall(r"(\d+(?:st|nd|rd|th)\s+Prize.*?)(?=\d+(?:st|nd|rd|th)\s+Prize|The prize winners|$)", text, re.DOTALL)
