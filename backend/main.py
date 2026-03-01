@@ -1,83 +1,14 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from datetime import datetime
-import pytz
 import os
 from app.routes import router
-from app.scrapper import fetch_latest_results
-from app.live_scrapper import fetch_live_results
 from app.database import collection
 
 load_dotenv()
 
-# --- SCHEDULER LOGIC ---
-async def daily_scrape_job():
-    """
-    Starts at 3:00 PM IST. 
-    Checks if today's results exist. If not, it scrapes.
-    If it finds today's results, it stops trying for the day.
-    """
-    ist = pytz.timezone('Asia/Kolkata')
-    today_str = datetime.now(ist).strftime("%d/%m/%Y")
-    
-    print(f"🕒 [{datetime.now(ist).strftime('%H:%M:%S')}] Checking results for {today_str}...")
-
-    # 1. STOP IF ALREADY SUCCESSFUL: Check if today's data is already in MongoDB
-    existing = await collection.find_one({"draw_date": today_str})
-    if existing:
-        print(f"✅ SUCCESS: Results for {today_str} already exist in DB. Skipping task.")
-        return
-
-    # 2. ATTEMPT OFFICIAL PDF SCRAPE
-    data = await fetch_latest_results()
-    
-    # 3. DATE VERIFICATION: Only save if the scraped PDF date matches today
-    if data and data.get("draw_date") == today_str:
-        await collection.update_one(
-            {"code": data["code"]}, 
-            {"$set": data}, 
-            upsert=True
-        )
-        print(f"🚀 OFFICIAL PDF: Fetched and saved results for {today_str}.")
-        return
-
-    # --- LIVE DATA FALLBACK (If Official PDF not ready) ---
-    print(f"⚠️ Official PDF not ready for {today_str}. Trying Live Source...")
-    live_data = await fetch_live_results()
-    
-    if live_data and live_data.get("draw_date") == today_str:
-        # Check if we already have partial live data, update it
-        await collection.update_one(
-            {"code": live_data["code"]}, 
-            {"$set": live_data}, 
-            upsert=True
-        )
-        print(f"⚡ LIVE UPDATE: Saved provisional results for {today_str}.")
-    else:
-        print(f"⏳ NOT READY: Neither Official nor Live results available for {today_str}. Retrying in 5 mins.")
-
-# --- APP LIFESPAN (Starts with FastAPI) ---
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Initialize Scheduler with IST timezone
-    scheduler = AsyncIOScheduler(timezone="Asia/Kolkata")
-    
-    # CRON TRIGGER: Run every 5 minutes during hours 15, 16, 17, and 18 (3 PM to 6:59 PM IST)
-    trigger = CronTrigger(hour="15-18", minute="0-59/5", timezone="Asia/Kolkata")
-    
-    scheduler.add_job(daily_scrape_job, trigger)
-    scheduler.start()
-    
-    print("📅 Scheduler Active: Monitoring Kerala Lottery (3:00 PM - 7:00 PM IST)")
-    yield
-    scheduler.shutdown()
-
 # --- FASTAPI SETUP ---
-app = FastAPI(title="Kerala Lottery API", lifespan=lifespan)
+app = FastAPI(title="Kerala Lottery API")
 
 # 2. DYNAMIC CORS CONFIGURATION
 origins = [

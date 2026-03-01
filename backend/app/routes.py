@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Query
 from app.scrapper import fetch_latest_results
-from app.live_scrapper import fetch_live_results
+from app.india_lottery_api import fetch_api_latest
 from app.database import collection
 from app.models import LotteryResult
 from datetime import datetime
+import pytz
 router = APIRouter()
 
 @router.get("/scrape-now")
@@ -25,9 +26,10 @@ async def trigger_scrape():
 
 @router.get("/scrape-live")
 async def trigger_live_scrape():
-    """Fetches live results from GoodReturns.in"""
-    data = await fetch_live_results()
-    if data:
+    """Fetches live results from IndiaLotteryAPI"""
+    result = await fetch_api_latest()
+    if result.get("status") == "success":
+        data = result["data"]
         # Save to MongoDB
         await collection.update_one(
             {"code": data["code"]}, 
@@ -35,7 +37,63 @@ async def trigger_live_scrape():
             upsert=True
         )
         return {"message": "Live Success", "data": data}
-    return {"message": "Failed to fetch live data"}
+    return {"message": "Failed to fetch live data", "details": result}
+
+@router.get("/cron/daily-scrape")
+async def cron_daily_scrape():
+    """
+    Triggered by Vercel Cron.
+    Checks if today's results exist. If not, it scrapes.
+    If it finds today's results, it stops trying for the day.
+    """
+    ist = pytz.timezone('Asia/Kolkata')
+    today_str = datetime.now(ist).strftime("%d/%m/%Y")
+    
+    print(f"🕒 [{datetime.now(ist).strftime('%H:%M:%S')}] Cron job running for {today_str}...")
+
+    # 1. CONTINUE SCRAPING: We no longer stop if data exists, so live data updates can flow in
+    # existing = await collection.find_one({"draw_date": today_str})
+    # if existing:
+    #     # print(f"✅ SUCCESS: Results for {today_str} already exist in DB. Skipping task.")
+    #     # return
+
+    # 2. ATTEMPT INDIA LOTTERY API
+    print(f"📡 Trying India Lottery API for {today_str}...")
+    live_result = await fetch_api_latest()
+    
+    if live_result.get("status") == "success":
+        live_data = live_result["data"]
+        # Only save if the API date matches today
+        if live_data and live_data.get("draw_date") == today_str:
+            await collection.update_one(
+                {"code": live_data["code"]}, 
+                {"$set": live_data}, 
+                upsert=True
+            )
+            msg = f"⚡ API UPDATE: Fetched and saved results for {today_str}."
+            print(msg)
+            return {"status": "success", "message": msg, "source": "API"}
+
+    # --- OFFICIAL PDF FALLBACK (If API not ready) ---
+    print(f"⚠️ API not ready for {today_str}. Trying Official PDF fallback...")
+    data = await fetch_latest_results()
+    
+    # 3. DATE VERIFICATION: Only save if the scraped PDF date matches today
+    if data and data.get("draw_date") == today_str:
+        # Try to save to MongoDB
+        await collection.update_one(
+            {"code": data["code"]}, 
+            {"$set": data}, 
+            upsert=True
+        )
+        msg = f"🚀 OFFICIAL PDF: Saved provisional results for {today_str}."
+        print(msg)
+        return {"status": "success", "message": msg, "source": "PDF"}
+            
+    msg = f"⏳ NOT READY: Neither API nor Official PDF results available for {today_str} yet."
+    print(msg)
+    return {"status": "pending", "message": msg}
+
 @router.get("/results")
 async def get_all_results(name: str = Query(None)):
     query = {}

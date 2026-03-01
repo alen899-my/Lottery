@@ -1,10 +1,15 @@
 import asyncio
-from app.live_scrapper import fetch_live_results
+from app.india_lottery_api import fetch_api_latest
 
 async def main():
-    print("🚀 Triggering scraper manually...")
-    data = await fetch_live_results()
-    print("✅ Result:", data)
+    print("🚀 Testing India Lottery API locally...")
+    result = await fetch_api_latest()
+    if result and result.get("status") == "success":
+        print("✅ Success! Transformed Data:\n")
+        import json
+        print(json.dumps(result["data"], indent=4, default=str))
+    else:
+        print("❌ Failed:", result)
 
 if __name__ == "__main__":
     asyncio.run(main())
